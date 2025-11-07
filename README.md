@@ -5,7 +5,7 @@ A TypeScript/JavaScript library for parsing BIP-321 Bitcoin URI scheme. This lib
 ## Features
 
 - ✅ **Complete BIP-321 compliance** - Implements the full BIP-321 specification
-- ✅ **Multiple payment methods** - Supports on-chain, Lightning (BOLT11), BOLT12 offers, silent payments, and private payments
+- ✅ **Multiple payment methods** - Supports on-chain, Lightning (BOLT11), BOLT12 offers, and silent payments
 - ✅ **Network detection** - Automatically detects mainnet, testnet, regtest, and signet networks
 - ✅ **Address validation** - Validates Bitcoin addresses (P2PKH, P2SH, Segwit v0, Taproot)
 - ✅ **Lightning invoice validation** - Validates BOLT11 Lightning invoices
@@ -21,7 +21,7 @@ result.paymentMethods;  // PaymentMethod[]
 result.errors;          // string[]
 
 result.paymentMethods.forEach((method: PaymentMethod) => {
-  method.type;    // "onchain" | "lightning" | "lno" | "silent-payment" | "private-payment" | "other"
+  method.type;    // "onchain" | "lightning" | "lno" | "silent-payment" | "other"
   method.network; // "mainnet" | "testnet" | "regtest" | "signet" | undefined
   method.valid;   // boolean
 });
@@ -181,7 +181,7 @@ interface BIP321ParseResult {
 
 ```typescript
 interface PaymentMethod {
-  type: "onchain" | "lightning" | "lno" | "silent-payment" | "private-payment" | "other";
+  type: "onchain" | "lightning" | "lno" | "silent-payment" | "other";
   value: string; // The actual address/invoice value
   network?: "mainnet" | "testnet" | "regtest" | "signet";
   valid: boolean; // Whether this payment method is valid
@@ -233,7 +233,6 @@ console.log(summary);
 | Lightning | `lightning` | BOLT11 Lightning invoices |
 | BOLT12 | `lno` | Lightning BOLT12 offers |
 | Silent Payments | `sp` | BIP352 Silent Payment addresses |
-| Private Payments | `pay` | BIP351 Private Payment addresses |
 
 ## Network Detection
 

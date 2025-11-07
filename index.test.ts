@@ -186,12 +186,6 @@ describe("BIP-321 Parser", () => {
       expect(result.valid).toBe(true);
       expect(result.paymentMethods.length).toBe(2);
     });
-
-    test("parses private payment address", () => {
-      const result = parseBIP321("bitcoin:?pay=bip351address");
-      expect(result.valid).toBe(true);
-      expect(result.paymentMethods[0]!.type).toBe("private-payment");
-    });
   });
 
   describe("Network-specific Parameters", () => {

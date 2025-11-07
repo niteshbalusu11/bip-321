@@ -4,13 +4,7 @@ import { sha256 } from "@noble/hashes/sha2.js";
 import { base58, bech32, bech32m } from "@scure/base";
 
 export interface PaymentMethod {
-  type:
-    | "onchain"
-    | "lightning"
-    | "lno"
-    | "silent-payment"
-    | "private-payment"
-    | "other";
+  type: "onchain" | "lightning" | "lno" | "silent-payment" | "other";
   value: string;
   network?: "mainnet" | "testnet" | "regtest" | "signet";
   valid: boolean;
@@ -353,13 +347,6 @@ export function parseBIP321(uri: string): BIP321ParseResult {
         if (!isSilentPayment) {
           result.errors.push("Invalid silent payment address format");
         }
-      } else if (lowerKey === "pay") {
-        const decodedValue = decodeURIComponent(value);
-        result.paymentMethods.push({
-          type: "private-payment",
-          value: decodedValue,
-          valid: true,
-        });
       } else if (
         lowerKey === "bc" ||
         lowerKey === "tb" ||

@@ -9,24 +9,17 @@ A TypeScript/JavaScript library for parsing BIP-321 Bitcoin URI scheme. This lib
 - ✅ **Network detection** - Automatically detects mainnet, testnet, regtest, and signet networks
 - ✅ **Address validation** - Validates Bitcoin addresses (P2PKH, P2SH, Segwit v0, Taproot)
 - ✅ **Lightning invoice validation** - Validates BOLT11 Lightning invoices
-- ✅ **Cross-platform** - Works in Node.js, browsers, and React Native
-- ✅ **TypeScript support** - Fully typed with TypeScript definitions
-- ✅ **Proof of payment** - Supports pop/req-pop parameters for payment callbacks
-- ✅ **Comprehensive error handling** - Clear error messages for invalid URIs
 
 ```typescript
 import { parseBIP321, type BIP321ParseResult, type PaymentMethod } from "bip-321";
 
-// Fully typed result with autocomplete support
 const result: BIP321ParseResult = parseBIP321("bitcoin:...");
 
-// TypeScript knows all available properties
 result.valid;           // boolean
 result.network;         // "mainnet" | "testnet" | "regtest" | "signet" | undefined
 result.paymentMethods;  // PaymentMethod[]
 result.errors;          // string[]
 
-// Payment methods are also fully typed
 result.paymentMethods.forEach((method: PaymentMethod) => {
   method.type;    // "onchain" | "lightning" | "lno" | "silent-payment" | "private-payment" | "other"
   method.network; // "mainnet" | "testnet" | "regtest" | "signet" | undefined
@@ -45,16 +38,6 @@ Or with npm:
 ```bash
 npm install bip-321
 ```
-
-### Note on Dependencies
-
-This library uses modern, browser-native dependencies:
-- **`@scure/base`** - Pure JavaScript base58, bech32, and bech32m encoding (no browserify needed)
-- **`@noble/hashes`** - Pure JavaScript cryptographic hashing
-- **`bitcoinjs-lib`** - Bitcoin address validation
-- **`light-bolt11-decoder`** - Lightning invoice parsing
-
-All dependencies work natively in Node.js, browsers, and React Native without any build tools or polyfills required.
 
 ## Quick Start
 

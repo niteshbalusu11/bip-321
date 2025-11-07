@@ -1,7 +1,7 @@
 import * as bitcoin from "bitcoinjs-lib";
 import { decode as decodeLightning } from "light-bolt11-decoder";
-import bs58check from "bs58check";
-import { bech32, bech32m } from "@scure/base";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { base58, bech32, bech32m } from "@scure/base";
 
 export interface PaymentMethod {
   type:
@@ -93,17 +93,36 @@ function detectAddressNetwork(
       }
     }
 
-    // Base58 addresses (P2PKH, P2SH)
-    const decoded = bs58check.decode(address);
-    const version = decoded[0];
+    // Base58 addresses (P2PKH, P2SH) - manual validation with checksum
+    try {
+      const decoded = base58.decode(address);
+      if (decoded.length < 25) {
+        return undefined;
+      }
 
-    // Mainnet: P2PKH (0x00), P2SH (0x05)
-    if (version === 0x00 || version === 0x05) {
-      return "mainnet";
-    }
-    // Testnet: P2PKH (0x6f), P2SH (0xc4)
-    else if (version === 0x6f || version === 0xc4) {
-      return "testnet";
+      // Verify checksum
+      const payload = decoded.slice(0, -4);
+      const checksum = decoded.slice(-4);
+      const hash = sha256(sha256(payload));
+
+      for (let i = 0; i < 4; i++) {
+        if (checksum[i] !== hash[i]) {
+          return undefined;
+        }
+      }
+
+      const version = payload[0];
+
+      // Mainnet: P2PKH (0x00), P2SH (0x05)
+      if (version === 0x00 || version === 0x05) {
+        return "mainnet";
+      }
+      // Testnet: P2PKH (0x6f), P2SH (0xc4)
+      else if (version === 0x6f || version === 0xc4) {
+        return "testnet";
+      }
+    } catch (e) {
+      return undefined;
     }
   } catch {
     return undefined;

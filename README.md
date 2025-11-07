@@ -46,6 +46,16 @@ Or with npm:
 npm install bip-321
 ```
 
+### Note on Dependencies
+
+This library uses modern, browser-native dependencies:
+- **`@scure/base`** - Pure JavaScript base58, bech32, and bech32m encoding (no browserify needed)
+- **`@noble/hashes`** - Pure JavaScript cryptographic hashing
+- **`bitcoinjs-lib`** - Bitcoin address validation
+- **`light-bolt11-decoder`** - Lightning invoice parsing
+
+All dependencies work natively in Node.js, browsers, and React Native without any build tools or polyfills required.
+
 ## Quick Start
 
 ```typescript

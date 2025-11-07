@@ -1,0 +1,23 @@
+{
+  "categories": {
+    "correctness": "warn",
+    "suspicious": "warn",
+    "pedantic": "warn",
+    "perf": "warn",
+    "style": "warn",
+    "restriction": "warn"
+  },
+  "rules": {
+    "typescript/no-explicit-any": "error",
+    "typescript/no-non-null-assertion": "error",
+    "no-console": "warn",
+    "no-debugger": "error",
+    "eqeqeq": "error"
+  },
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/*.min.js"
+  ]
+}

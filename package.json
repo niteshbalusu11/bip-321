@@ -1,0 +1,65 @@
+{
+  "name": "bip-321",
+  "version": "0.0.1",
+  "description": "A TypeScript/JavaScript library for parsing BIP-321 Bitcoin URI scheme with support for multiple payment methods",
+  "type": "module",
+  "main": "./index.ts",
+  "module": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": {
+      "import": "./index.ts",
+      "types": "./index.ts"
+    }
+  },
+  "scripts": {
+    "test": "bun test",
+    "example": "bun example.ts"
+  },
+  "keywords": [
+    "bitcoin",
+    "bip-321",
+    "bip321",
+    "uri",
+    "lightning",
+    "bolt11",
+    "bolt12",
+    "silent-payments",
+    "payment",
+    "cryptocurrency",
+    "parser",
+    "validator",
+    "bitcoin-uri",
+    "payment-request",
+    "taproot",
+    "segwit",
+    "mainnet",
+    "testnet",
+    "regtest"
+  ],
+  "author": "",
+  "license": "BSD-2-Clause",
+  "dependencies": {
+    "@scure/base": "^2.0.0",
+    "bitcoinjs-lib": "^7.0.0",
+    "bs58check": "^4.0.0",
+    "light-bolt11-decoder": "^3.2.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/bip-321.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/bip-321/issues"
+  },
+  "homepage": "https://github.com/yourusername/bip-321#readme",
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

@@ -13,11 +13,6 @@ A TypeScript/JavaScript library for parsing BIP-321 Bitcoin URI scheme. This lib
 - ✅ **TypeScript support** - Fully typed with TypeScript definitions
 - ✅ **Proof of payment** - Supports pop/req-pop parameters for payment callbacks
 - ✅ **Comprehensive error handling** - Clear error messages for invalid URIs
-- ✅ **Full type safety** - Passes strict TypeScript type checking with no errors
-
-## TypeScript Type Safety
-
-This library is built with full TypeScript support and passes strict type checking (`tsc --noEmit`) with zero errors. All functions return fully-typed objects, providing excellent IDE autocomplete and compile-time safety.
 
 ```typescript
 import { parseBIP321, type BIP321ParseResult, type PaymentMethod } from "bip-321";
@@ -40,8 +35,6 @@ result.paymentMethods.forEach((method: PaymentMethod) => {
 ```
 
 ## Installation
-</text>
-
 
 ```bash
 bun add bip-321

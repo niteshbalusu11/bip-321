@@ -53,12 +53,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/bip-321.git"
+    "url": "https://github.com/niteshbalusu11/bip-321.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/bip-321/issues"
+    "url": "https://github.com/niteshbalusu11/bip-321/issues"
   },
-  "homepage": "https://github.com/yourusername/bip-321#readme",
+  "homepage": "https://github.com/niteshbalusu11/bip-321#readme",
   "engines": {
     "node": ">=16.0.0"
   }

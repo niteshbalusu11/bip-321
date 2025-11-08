@@ -53,6 +53,49 @@ console.log(result.address); // "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
 console.log(result.paymentMethods); // Array of payment methods
 ```
 
+## Validation Functions
+
+The library also exports standalone validation functions that can be used independently:
+
+```typescript
+import {
+  validateBitcoinAddress,
+  validateLightningInvoice,
+  validateBolt12Offer,
+  validateSilentPaymentAddress,
+  validateArkAddress,
+  validatePopUri,
+} from "bip-321";
+
+// Validate a Bitcoin address
+const btcResult = validateBitcoinAddress("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa");
+console.log(btcResult.valid); // true
+console.log(btcResult.network); // "mainnet"
+
+// Validate a Lightning invoice
+const lnResult = validateLightningInvoice("lnbc15u1p3xnhl2pp5...");
+console.log(lnResult.valid); // true
+console.log(lnResult.network); // "mainnet"
+
+// Validate a BOLT12 offer
+const offerResult = validateBolt12Offer("lno1qqqq02k20d");
+console.log(offerResult.valid); // true
+
+// Validate a Silent Payment address
+const spResult = validateSilentPaymentAddress("sp1qq...");
+console.log(spResult.valid); // true
+console.log(spResult.network); // "mainnet"
+
+// Validate an Ark address
+const arkResult = validateArkAddress("ark1p...");
+console.log(arkResult.valid); // true
+console.log(arkResult.network); // "mainnet"
+
+// Validate a pop URI
+const popResult = validatePopUri("myapp://callback");
+console.log(popResult.valid); // true
+```
+
 ## Usage Examples
 
 ### Basic On-Chain Payment
@@ -192,23 +235,98 @@ Parses a BIP-321 URI and returns detailed information about the payment request.
 **Parameters:**
 - `uri` - The Bitcoin URI string to parse
 - `expectedNetwork` (optional) - Expected network for all payment methods. If specified, all payment methods must match this network or the URI will be marked invalid.
+
+**Returns:** `BIP321ParseResult` object
+
+### Validation Functions
+
+The library exports individual validation functions for each payment method type:
+
+#### `validateBitcoinAddress(address: string)`
+
+Validates a Bitcoin address and returns network information.
+
+**Returns:**
+```typescript
+{
+  valid: boolean;
+  network?: "mainnet" | "testnet" | "regtest" | "signet";
+  error?: string;
+}
+```
+
+#### `validateLightningInvoice(invoice: string)`
+
+Validates a BOLT11 Lightning invoice and detects the network.
+
+**Returns:**
+```typescript
+{
+  valid: boolean;
+  network?: "mainnet" | "testnet" | "regtest" | "signet";
+  error?: string;
+}
+```
+
+#### `validateBolt12Offer(offer: string)`
+
+Validates a BOLT12 offer. Note: BOLT12 offers are network-agnostic.
+
+**Returns:**
+```typescript
+{
+  valid: boolean;
+  error?: string;
+}
+```
+
+#### `validateSilentPaymentAddress(address: string)`
+
+Validates a BIP-352 Silent Payment address.
+
+**Returns:**
+```typescript
+{
+  valid: boolean;
+  network?: "mainnet" | "testnet";
+  error?: string;
+}
+```
+
+**Note:** For Silent Payments, `testnet` covers testnet, signet, and regtest.
+
+#### `validateArkAddress(address: string)`
+
+Validates an Ark address (BOAT-0001).
+
+**Returns:**
+```typescript
+{
+  valid: boolean;
+  network?: "mainnet" | "testnet";
+  error?: string;
+}
+```
+
+**Note:** For Ark, `testnet` covers testnet, signet, and regtest.
+
+#### `validatePopUri(uri: string)`
+
+Validates a proof-of-payment URI and checks for forbidden schemes.
+
+**Returns:**
+```typescript
+{
+  valid: boolean;
+  error?: string;
+}
+```
 </text>
 
 <old_text line=240>
-## Validation Rules
+### BIP321ParseResult
 
-The parser enforces BIP-321 validation rules:
-
-1. ✅ URI must start with `bitcoin:` (case-insensitive)
-2. ✅ Address in URI path must be valid or empty
-3. ✅ `amount` must be decimal BTC (no commas)
-4. ✅ `label`, `message`, and `amount` cannot appear multiple times
-5. ✅ `pop` and `req-pop` cannot both be present
-6. ✅ Required parameters (`req-*`) must be understood or URI is invalid
-7. ✅ Network-specific parameters (`bc`, `tb`, etc.) must match address network
-8. ✅ `pop` URI scheme must not be forbidden (http, https, file, javascript, mailto)
-
-**Returns:** `BIP321ParseResult` object containing:
+The `parseBIP321` function returns a `BIP321ParseResult` object containing:
 
 ```typescript
 interface BIP321ParseResult {
@@ -309,9 +427,16 @@ The library automatically detects the network from:
 - **Regtest**: `lnbcrt...`
 - **Signet**: `lntbs...`
 
+### Silent Payment Addresses
+- **Mainnet**: `sp1q...`
+- **Testnet**: `tsp1q...` (covers testnet, signet, and regtest)
+
 ### Ark Addresses
 - **Mainnet**: `ark1...`
-- **Testnet**: `tark1...`
+- **Testnet**: `tark1...` (covers testnet, signet, and regtest)
+
+### BOLT12 Offers
+- **Network-agnostic**: `lno...` (no network-specific prefix)
 
 ## Validation Rules
 

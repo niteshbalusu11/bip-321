@@ -7,6 +7,16 @@ import {
   validatePopUri,
 } from "./validators";
 
+// Re-export validation functions for public API
+export {
+  validateBitcoinAddress,
+  validateLightningInvoice,
+  validateBolt12Offer,
+  validateSilentPaymentAddress,
+  validateArkAddress,
+  validatePopUri,
+};
+
 export interface PaymentMethod {
   type: "onchain" | "lightning" | "offer" | "silent-payment" | "ark";
   value: string;

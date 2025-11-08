@@ -557,5 +557,45 @@ describe("BIP-321 Parser", () => {
       expect(result.paymentMethods.length).toBe(2);
       expect(result.paymentMethods.every((pm) => pm.valid)).toBe(true);
     });
+
+    test("accepts Ark testnet address when expecting regtest", () => {
+      const result = parseBIP321(
+        `bitcoin:?ark=${TEST_DATA.ark.testnet}`,
+        "regtest",
+      );
+      expect(result.valid).toBe(true);
+      expect(result.paymentMethods[0]!.type).toBe("ark");
+      expect(result.paymentMethods[0]!.valid).toBe(true);
+    });
+
+    test("accepts Ark testnet address when expecting signet", () => {
+      const result = parseBIP321(
+        `bitcoin:?ark=${TEST_DATA.ark.testnet}`,
+        "signet",
+      );
+      expect(result.valid).toBe(true);
+      expect(result.paymentMethods[0]!.type).toBe("ark");
+      expect(result.paymentMethods[0]!.valid).toBe(true);
+    });
+
+    test("accepts silent payment testnet address when expecting regtest", () => {
+      const result = parseBIP321(
+        `bitcoin:?sp=${TEST_DATA.silentPayment.testnet}`,
+        "regtest",
+      );
+      expect(result.valid).toBe(true);
+      expect(result.paymentMethods[0]!.type).toBe("silent-payment");
+      expect(result.paymentMethods[0]!.valid).toBe(true);
+    });
+
+    test("accepts silent payment testnet address when expecting signet", () => {
+      const result = parseBIP321(
+        `bitcoin:?sp=${TEST_DATA.silentPayment.testnet}`,
+        "signet",
+      );
+      expect(result.valid).toBe(true);
+      expect(result.paymentMethods[0]!.type).toBe("silent-payment");
+      expect(result.paymentMethods[0]!.valid).toBe(true);
+    });
   });
 });

@@ -232,7 +232,12 @@ export function parseBIP321(
         const decodedValue = decodeURIComponent(value);
         const validation = validateBitcoinAddress(decodedValue);
         const networkMatches =
-          validation.valid && validation.network === expectedNetwork;
+          validation.valid &&
+          (validation.network === expectedNetwork ||
+            // Testnet and signet are interchangeable for onchain
+            (validation.network === "testnet" &&
+              expectedNetwork === "signet") ||
+            (validation.network === "signet" && expectedNetwork === "testnet"));
 
         result.paymentMethods.push({
           type: "onchain",
@@ -274,12 +279,16 @@ export function parseBIP321(
     for (const method of result.paymentMethods) {
       if (method.network && method.network !== expectedNetwork) {
         // For Ark and Silent Payments, testnet covers testnet/signet/regtest
+        // For onchain, testnet and signet are interchangeable
         const isTestnetCompatible =
-          (method.type === "ark" || method.type === "silent-payment") &&
-          method.network === "testnet" &&
-          (expectedNetwork === "testnet" ||
-            expectedNetwork === "signet" ||
-            expectedNetwork === "regtest");
+          ((method.type === "ark" || method.type === "silent-payment") &&
+            method.network === "testnet" &&
+            (expectedNetwork === "testnet" ||
+              expectedNetwork === "signet" ||
+              expectedNetwork === "regtest")) ||
+          (method.type === "onchain" &&
+            ((method.network === "testnet" && expectedNetwork === "signet") ||
+              (method.network === "signet" && expectedNetwork === "testnet")));
 
         if (!isTestnetCompatible) {
           result.errors.push(

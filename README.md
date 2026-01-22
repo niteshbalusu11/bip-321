@@ -27,6 +27,18 @@ result.paymentMethods.forEach((method: PaymentMethod) => {
 });
 ```
 
+```typescript
+import { encodeBIP321 } from "bip-321";
+
+try {
+  const { uri } = encodeBIP321({ address: "bitcoin_address", label: "Label", message: "Message", amount: 0.5 });
+
+  // uri = bitcoin:bitcoin_address?label=Label&message=Message&amount=0.5
+} catch (error) {
+  console.error(error)
+}
+```
+
 ## Installation
 
 ```bash
@@ -42,7 +54,7 @@ npm install bip-321
 ## Quick Start
 
 ```typescript
-import { parseBIP321 } from "bip-321";
+import { parseBIP321, encodeBIP321 } from "bip-321";
 
 // Parse a simple Bitcoin address
 const result = parseBIP321("bitcoin:1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa");
@@ -51,6 +63,15 @@ console.log(result.valid); // true
 console.log(result.network); // "mainnet"
 console.log(result.address); // "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
 console.log(result.paymentMethods); // Array of payment methods
+
+// Encode a simple Bitcoin address
+try {
+  const { uri } = encodeBIP321({ address: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa" });
+
+  console.log(uri); // bitcoin:1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
+} catch (error) {
+  console.error(error)
+}
 ```
 
 ## Validation Functions
@@ -140,9 +161,11 @@ result.paymentMethods.forEach((method) => {
 ### Lightning-Only Payment
 
 ```typescript
-const result = parseBIP321(
-  "bitcoin:?lightning=lnbc15u1p3xnhl2pp5jptserfk3zk4qy42tlucycrfwxhydvlemu9pqr93tuzlv9cc7g3s..."
-);
+// Encode lightning-only payment (no on-chain address)
+const { uri } = encodeBIP321({ lightning: "lnbc15u1p3xnhl2pp5jptserfk3zk4qy42tlucycrfwxhydvlemu9pqr93tuzlv9cc7g3s..." });
+
+// Parse lightning-only payment
+const result = parseBIP321(uri);
 
 console.log(result.paymentMethods[0].type); // "lightning"
 console.log(result.paymentMethods[0].network); // "mainnet"
@@ -151,18 +174,18 @@ console.log(result.paymentMethods[0].network); // "mainnet"
 ### Ark Payment
 
 ```typescript
-// Mainnet Ark address
-const result = parseBIP321(
-  "bitcoin:?ark=ark1pwh9vsmezqqpjy9akejayl2vvcse6he97rn40g84xrlvrlnhayuuyefrp9nse2yspqqjl5wpy"
-);
+// Encode Ark-only payment (no on-chain address)
+const { uri } = encodeBIP321({ ark: "ark1pwh9vsmezqqpjy9akejayl2vvcse6he97rn40g84xrlvrlnhayuuyefrp9nse2yspqqjl5wpy" });
+
+// Parse Ark payment
+const result = parseBIP321(uri);
 
 console.log(result.paymentMethods[0].type); // "ark"
 console.log(result.paymentMethods[0].network); // "mainnet"
 
 // Testnet Ark address
-const testnetResult = parseBIP321(
-  "bitcoin:?ark=tark1pm6sr0fpzqqpnzzwxf209kju4qavs4gtumxk30yv2u5ncrvtp72z34axcvrydtdqpqq5838km"
-);
+const { uri: testnetUri } = encodeBIP321({ ark: "tark1pm6sr0fpzqqpnzzwxf209kju4qavs4gtumxk30yv2u5ncrvtp72z34axcvrydtdqpqq5838km" });
+const testnetResult = parseBIP321(testnetUri);
 
 console.log(testnetResult.paymentMethods[0].network); // "testnet"
 ```
@@ -237,6 +260,51 @@ Parses a BIP-321 URI and returns detailed information about the payment request.
 - `expectedNetwork` (optional) - Expected network for all payment methods. If specified, all payment methods must match this network or the URI will be marked invalid.
 
 **Returns:** `BIP321ParseResult` object
+
+### `encodeBIP321(params: BIP321EncodeParams): BIP321EncodeResult`
+
+Encodes payment parameters into a BIP-321 URI string. Validates the generated URI before returning.
+
+**Parameters:**
+- `params` - The `BIP321EncodeParams` object containing payment details
+
+**Returns:** `BIP321EncodeResult` object
+
+**Throws:** `Error` if the generated URI is invalid or contains no valid payment methods
+
+### `BIP321EncodeParams` Interface
+
+```typescript
+interface BIP321EncodeParams {
+  address?: string;                              // Main Bitcoin address
+  amount?: number;                               // Amount in BTC
+  label?: string;                                // Label for the recipient
+  message?: string;                              // Message describing the transaction
+  lightning?: string | string[];                 // BOLT11 Lightning invoice(s)
+  lno?: string | string[];                       // BOLT12 offer(s)
+  sp?: string | string[];                        // Silent Payment address(es)
+  ark?: string | string[];                       // Ark address(es)
+  bc?: string | string[];                        // Mainnet address(es)
+  tb?: string | string[];                        // Testnet address(es)
+  bcrt?: string | string[];                      // Regtest address(es)
+  tbs?: string | string[];                       // Signet address(es)
+  pop?: string;                                  // Proof of payment callback URI
+  reqPop?: string;                               // Required proof of payment callback URI
+  optionalParams?: Record<string, string | string[]>; // Additional optional parameters
+}
+```
+
+**Note:** `pop` and `reqPop` are mutually exclusive - only one can be provided.
+
+### `BIP321EncodeResult` Interface
+
+```typescript
+interface BIP321EncodeResult extends BIP321ParseResult {
+  uri: string; // The encoded BIP-321 URI string
+}
+```
+
+The result includes all fields from `BIP321ParseResult` plus the generated `uri` string.
 
 ### Validation Functions
 

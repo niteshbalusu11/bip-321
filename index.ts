@@ -17,17 +17,19 @@ export {
   validatePopUri,
 };
 
+export type Network = "mainnet" | "testnet" | "regtest" | "signet";
+
 export interface PaymentMethod {
   type: "onchain" | "lightning" | "offer" | "silent-payment" | "ark";
   value: string;
-  network?: "mainnet" | "testnet" | "regtest" | "signet";
+  network?: Network;
   valid: boolean;
   error?: string;
 }
 
 export interface BIP321ParseResult {
   address?: string;
-  network?: "mainnet" | "testnet" | "regtest" | "signet";
+  network?: Network;
   amount?: number;
   label?: string;
   message?: string;
@@ -42,7 +44,7 @@ export interface BIP321ParseResult {
 
 export function parseBIP321(
   uri: string,
-  expectedNetwork?: "mainnet" | "testnet" | "regtest" | "signet",
+  expectedNetwork?: Network,
 ): BIP321ParseResult {
   const result: BIP321ParseResult = {
     paymentMethods: [],
@@ -312,6 +314,90 @@ export function parseBIP321(
   }
 
   return result;
+}
+
+interface BIP321EncodeParamsBase {
+  address?: string;
+  amount?: number;
+  label?: string;
+  message?: string;
+  lightning?: string | string[];
+  lno?: string | string[];
+  sp?: string | string[];
+  ark?: string | string[];
+  bc?: string | string[];
+  tb?: string | string[];
+  bcrt?: string | string[];
+  tbs?: string | string[];
+  optionalParams?: Record<string, string | string[]>;
+}
+
+// Make pop and reqPop mutually exclusive using discriminated union
+export type BIP321EncodeParams = BIP321EncodeParamsBase &
+  (
+    | { pop?: string; reqPop?: never }
+    | { pop?: never; reqPop?: string }
+    | { pop?: never; reqPop?: never }
+  );
+
+export type BIP321EncodeResult = BIP321ParseResult & { uri: string }
+
+export function encodeBIP321(params: BIP321EncodeParams): BIP321EncodeResult {
+  const searchParams = new URLSearchParams();
+
+  const append = (key: string, value: string | string[] | undefined) => {
+    if (value === undefined) return;
+    const values = Array.isArray(value) ? value : [value];
+    for (const v of values) {
+      searchParams.append(key, v);
+    }
+  };
+
+  if (params.amount !== undefined) {
+    if (Number.isNaN(params.amount) || !Number.isFinite(params.amount) || params.amount < 0) {
+      throw new Error("Invalid amount format");
+    }
+    searchParams.append("amount", params.amount.toString());
+  }
+
+  append("label", params.label);
+  append("message", params.message);
+
+  if (params.pop !== undefined) {
+    searchParams.append("pop", params.pop);
+  } else if (params.reqPop !== undefined) {
+    searchParams.append("req-pop", params.reqPop);
+  }
+
+  append("lightning", params.lightning);
+  append("lno", params.lno);
+  append("sp", params.sp);
+  append("ark", params.ark);
+
+  append("bc", params.bc);
+  append("tb", params.tb);
+  append("bcrt", params.bcrt);
+  append("tbs", params.tbs);
+
+  if (params.optionalParams) {
+    for (const [key, value] of Object.entries(params.optionalParams)) {
+      append(key, value);
+    }
+  }
+
+  const address = params.address ?? "";
+
+  // URLSearchParams encodes spaces as '+', but BIP-321 expects percent encoding
+  const query = searchParams.toString().replace(/\+/g, "%20");
+  const uri = `bitcoin:${address}${query ? `?${query}` : ""}`;
+  const parsed = parseBIP321(uri);
+
+  const hasValidPaymentMethod = parsed.paymentMethods.some((pm) => pm.valid);
+  if (!parsed.valid || !hasValidPaymentMethod) {
+    throw new Error(parsed.errors.join("; ") || "No valid payment methods");
+  }
+
+  return { ...parsed, uri };
 }
 
 export function getPaymentMethodsByNetwork(

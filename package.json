@@ -1,6 +1,6 @@
 {
   "name": "bip-321",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "A TypeScript/JavaScript library for parsing BIP-321 Bitcoin URI scheme with support for multiple payment methods",
   "type": "module",
   "main": "./index.ts",

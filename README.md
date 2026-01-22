@@ -161,9 +161,11 @@ result.paymentMethods.forEach((method) => {
 ### Lightning-Only Payment
 
 ```typescript
-const result = parseBIP321(
-  "bitcoin:?lightning=lnbc15u1p3xnhl2pp5jptserfk3zk4qy42tlucycrfwxhydvlemu9pqr93tuzlv9cc7g3s..."
-);
+// Encode lightning-only payment (no on-chain address)
+const { uri } = encodeBIP321({ lightning: "lnbc15u1p3xnhl2pp5jptserfk3zk4qy42tlucycrfwxhydvlemu9pqr93tuzlv9cc7g3s..." });
+
+// Parse lightning-only payment
+const result = parseBIP321(uri);
 
 console.log(result.paymentMethods[0].type); // "lightning"
 console.log(result.paymentMethods[0].network); // "mainnet"
@@ -172,18 +174,18 @@ console.log(result.paymentMethods[0].network); // "mainnet"
 ### Ark Payment
 
 ```typescript
-// Mainnet Ark address
-const result = parseBIP321(
-  "bitcoin:?ark=ark1pwh9vsmezqqpjy9akejayl2vvcse6he97rn40g84xrlvrlnhayuuyefrp9nse2yspqqjl5wpy"
-);
+// Encode Ark-only payment (no on-chain address)
+const { uri } = encodeBIP321({ ark: "ark1pwh9vsmezqqpjy9akejayl2vvcse6he97rn40g84xrlvrlnhayuuyefrp9nse2yspqqjl5wpy" });
+
+// Parse Ark payment
+const result = parseBIP321(uri);
 
 console.log(result.paymentMethods[0].type); // "ark"
 console.log(result.paymentMethods[0].network); // "mainnet"
 
 // Testnet Ark address
-const testnetResult = parseBIP321(
-  "bitcoin:?ark=tark1pm6sr0fpzqqpnzzwxf209kju4qavs4gtumxk30yv2u5ncrvtp72z34axcvrydtdqpqq5838km"
-);
+const { uri: testnetUri } = encodeBIP321({ ark: "tark1pm6sr0fpzqqpnzzwxf209kju4qavs4gtumxk30yv2u5ncrvtp72z34axcvrydtdqpqq5838km" });
+const testnetResult = parseBIP321(testnetUri);
 
 console.log(testnetResult.paymentMethods[0].network); // "testnet"
 ```

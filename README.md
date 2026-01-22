@@ -27,6 +27,18 @@ result.paymentMethods.forEach((method: PaymentMethod) => {
 });
 ```
 
+```typescript
+import { encodeBIP321 } from "bip-321";
+
+try {
+  const { uri } = encodeBIP321({ address: "bitcoin_address", label: "Label", message: "Message", amount: 0.5 });
+
+  // uri = bitcoin:bitcoin_address?label=Label&message=Message&amount=0.5
+} catch (error) {
+  console.error(error)
+}
+```
+
 ## Installation
 
 ```bash

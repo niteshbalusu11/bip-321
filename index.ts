@@ -340,7 +340,9 @@ export type BIP321EncodeParams = BIP321EncodeParamsBase &
     | { pop?: never; reqPop?: never }
   );
 
-export function encodeBIP321(params: BIP321EncodeParams): BIP321ParseResult & { uri: string } {
+export type BIP321EncodeResult = BIP321ParseResult & { uri: string }
+
+export function encodeBIP321(params: BIP321EncodeParams): BIP321EncodeResult {
   const searchParams = new URLSearchParams();
 
   const append = (key: string, value: string | string[] | undefined) => {
@@ -384,7 +386,7 @@ export function encodeBIP321(params: BIP321EncodeParams): BIP321ParseResult & { 
   }
 
   const address = params.address ?? "";
-  
+
   // URLSearchParams encodes spaces as '+', but BIP-321 expects percent encoding
   const query = searchParams.toString().replace(/\+/g, "%20");
   const uri = `bitcoin:${address}${query ? `?${query}` : ""}`;

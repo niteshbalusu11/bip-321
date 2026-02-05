@@ -144,7 +144,9 @@ export function validateLightningInvoice(invoice: string): {
     if (
       coinNetworkSection &&
       "value" in coinNetworkSection &&
-      coinNetworkSection.value
+      coinNetworkSection.value &&
+      typeof coinNetworkSection.value === "object" &&
+      "bech32" in coinNetworkSection.value
     ) {
       const bech32Prefix = coinNetworkSection.value.bech32;
       switch (bech32Prefix) {

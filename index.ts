@@ -150,7 +150,6 @@ export function parseBIP321(
           }
         }
       } else if (lowerKey === "pop" || lowerKey === "req-pop") {
-        const _popKey = lowerKey === "req-pop" ? "req-pop" : "pop";
         if (result.pop !== undefined || result.popRequired !== undefined) {
           result.errors.push("Multiple pop/req-pop parameters not allowed");
           result.valid = false;

@@ -174,6 +174,48 @@ export function validateLightningInvoice(invoice: string): {
   }
 }
 
+export type LightningPaymentKind = "bolt11" | "lnurl" | "lnaddress";
+
+// Reverse-compatible validation for the legacy BIP21 `lightning=` parameter,
+// which in the wild carries a BOLT11 invoice, an LNURL, or a lightning address.
+export function validateLightningPayment(value: string): {
+  valid: boolean;
+  kind?: LightningPaymentKind;
+  network?: "mainnet" | "testnet" | "regtest" | "signet";
+  error?: string;
+} {
+  if (!value || typeof value !== "string") {
+    return { valid: false, error: "Empty or invalid lightning value" };
+  }
+
+  if (/^[^@\s]+@[^@\s.]+\.[^@\s]+$/.test(value)) {
+    return { valid: true, kind: "lnaddress" };
+  }
+
+  if (value.toLowerCase().startsWith("lnurl1")) {
+    try {
+      const { prefix } = bech32.decode(value as `${string}1${string}`, 2000);
+      if (prefix.toLowerCase() === "lnurl") {
+        return { valid: true, kind: "lnurl" };
+      }
+      return { valid: false, error: "Invalid LNURL prefix" };
+    } catch (e) {
+      return {
+        valid: false,
+        error: `Invalid LNURL: ${e instanceof Error ? e.message : String(e)}`,
+      };
+    }
+  }
+
+  const bolt11 = validateLightningInvoice(value);
+  return {
+    valid: bolt11.valid,
+    kind: bolt11.valid ? "bolt11" : undefined,
+    network: bolt11.network,
+    error: bolt11.error,
+  };
+}
+
 export function validateBolt12Offer(offer: string): {
   valid: boolean;
   error?: string;

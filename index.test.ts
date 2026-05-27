@@ -1,4 +1,5 @@
 import { test, expect, describe } from "bun:test";
+import { bech32 } from "@scure/base";
 import {
   parseBIP321,
   getPaymentMethodsByNetwork,
@@ -6,6 +7,11 @@ import {
   formatPaymentMethodsSummary,
   encodeBIP321,
 } from "./index";
+
+function makeLnurl(url: string): string {
+  const words = bech32.toWords(new TextEncoder().encode(url));
+  return bech32.encode("lnurl", words, 2000);
+}
 
 const TEST_DATA = {
   addresses: {
@@ -30,6 +36,9 @@ const TEST_DATA = {
       "lnbcrt50u1p5s6w2zpp5juf0r9zutj4zv00kpuuqmgn246azqaq0u5kksx93p46ue94gpmrsdqqcqzzsxqyz5vqsp57u7clsm57nas7c0r2p4ujxr8whla6gxmwf44yqt9f862evjzd3ds9qxpqysgqrwvspjd8g3cfrkg2mrmxfdjcwk5nenw2qnmrys0rvkdmxes6jf5xfykunl5g9hnnahsnz0c90u7k42hmr7w90c0qkw3lllwy40mmqgsqjtyzpd",
     signet:
       "lntbs10u1p5s6wgtsp5d8a763exauvdk6s5gwvl8zmuapmgjq05fdv6trasjd4slvgkvzzqpp56vxdyl24hmkpz0tvqq84xdpqqeql3x7kh8tey4uum2cu8jny6djqdq4g9exkgznw3hhyefqyvenyxqzjccqp2rzjqdwy5et9ygczjl2jqmr9e5xm28u3gksjfrf0pht04uwz2lt9d59cypqelcqqq8gqqqqqqqqpqqqqqzsqqc9qxpqysgq0x0pg2s65rnp2cr35td5tq0vwgmnrghkpzt93eypqvvfu5m40pcjl9k2x2m4kqgvz2ez8tzxqgw0nyeg2w60nfky579uakd4mhr3ncgp0xwars",
+    // LNURL: bech32 of an https URL (generated below for valid checksum).
+    lnurl: makeLnurl("https://service.com/.well-known/lnurlp/satoshi"),
+    lnaddress: "satoshi@bitcoin.org",
   },
   ark: {
     mainnet:
@@ -192,6 +201,53 @@ describe("BIP-321 Parser", () => {
       );
       expect(result.valid).toBe(true);
       expect(result.paymentMethods[0]!.network).toBe("testnet");
+    });
+
+    test("parses LNURL in lightning parameter (legacy BIP21 compat)", () => {
+      const result = parseBIP321(
+        `bitcoin:${TEST_DATA.addresses.mainnet.p2pkh}?lightning=${TEST_DATA.lightning.lnurl}`,
+      );
+      expect(result.valid).toBe(true);
+      const lightning = result.paymentMethods.find(
+        (pm) => pm.type === "lightning",
+      );
+      expect(lightning?.valid).toBe(true);
+      expect(lightning?.kind).toBe("lnurl");
+    });
+
+    test("parses uppercase LNURL in lightning parameter", () => {
+      const result = parseBIP321(
+        `bitcoin:?lightning=${TEST_DATA.lightning.lnurl.toUpperCase()}`,
+      );
+      expect(result.valid).toBe(true);
+      expect(result.paymentMethods[0]!.kind).toBe("lnurl");
+    });
+
+    test("parses lightning address in lightning parameter", () => {
+      const result = parseBIP321(
+        `bitcoin:?lightning=${TEST_DATA.lightning.lnaddress}`,
+      );
+      expect(result.valid).toBe(true);
+      expect(result.paymentMethods[0]!.valid).toBe(true);
+      expect(result.paymentMethods[0]!.kind).toBe("lnaddress");
+    });
+
+    test("marks bolt11 invoices with kind bolt11", () => {
+      const result = parseBIP321(
+        `bitcoin:?lightning=${TEST_DATA.lightning.mainnet}`,
+      );
+      expect(result.paymentMethods[0]!.kind).toBe("bolt11");
+    });
+
+    test("rejects garbage lightning value", () => {
+      const result = parseBIP321(
+        `bitcoin:${TEST_DATA.addresses.mainnet.bech32}?lightning=notalightningthing`,
+      );
+      const lightning = result.paymentMethods.find(
+        (pm) => pm.type === "lightning",
+      );
+      expect(lightning?.valid).toBe(false);
+      expect(lightning?.kind).toBeUndefined();
     });
 
     test("rejects testnet address in bc parameter", () => {

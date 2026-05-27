@@ -1,21 +1,25 @@
 import {
   validateBitcoinAddress,
   validateLightningInvoice,
+  validateLightningPayment,
   validateBolt12Offer,
   validateSilentPaymentAddress,
   validateArkAddress,
   validatePopUri,
 } from "./validators";
+import type { LightningPaymentKind } from "./validators";
 
 // Re-export validation functions for public API
 export {
   validateBitcoinAddress,
   validateLightningInvoice,
+  validateLightningPayment,
   validateBolt12Offer,
   validateSilentPaymentAddress,
   validateArkAddress,
   validatePopUri,
 };
+export type { LightningPaymentKind };
 
 export type Network = "mainnet" | "testnet" | "regtest" | "signet";
 
@@ -23,6 +27,8 @@ export interface PaymentMethod {
   type: "onchain" | "lightning" | "offer" | "silent-payment" | "ark";
   value: string;
   network?: Network;
+  // For lightning methods: distinguishes bolt11 invoice, lnurl, and lightning address.
+  kind?: LightningPaymentKind;
   valid: boolean;
   error?: string;
 }
@@ -167,11 +173,12 @@ export function parseBIP321(
         }
       } else if (lowerKey === "lightning") {
         const decodedValue = decodeURIComponent(value);
-        const validation = validateLightningInvoice(decodedValue);
+        const validation = validateLightningPayment(decodedValue);
         result.paymentMethods.push({
           type: "lightning",
           value: decodedValue,
           network: validation.network,
+          kind: validation.kind,
           valid: validation.valid,
           error: validation.error,
         });

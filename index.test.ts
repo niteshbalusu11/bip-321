@@ -660,6 +660,21 @@ describe("BIP-321 Encoder", () => {
       expect(result.uri).toBe(`bitcoin:${TEST_DATA.addresses.mainnet.p2pkh}?amount=0`)
     });
 
+    test("encodes small amounts as decimal, not scientific notation", () => {
+      const cases: [number, string][] = [
+        [1e-7, "0.0000001"],
+        [1e-6, "0.000001"],
+        [0.0001, "0.0001"],
+        [1, "1"],
+        [21000000, "21000000"],
+      ];
+      for (const [amount, expected] of cases) {
+        const result = encodeBIP321({ address: TEST_DATA.addresses.mainnet.p2pkh, amount });
+        expect(result.valid).toBe(true);
+        expect(result.uri).toBe(`bitcoin:${TEST_DATA.addresses.mainnet.p2pkh}?amount=${expected}`);
+      }
+    });
+
     test("encodes multiple parameters", () => {
       const result = encodeBIP321({
         address: TEST_DATA.addresses.mainnet.p2pkh,

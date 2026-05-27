@@ -341,6 +341,11 @@ export type BIP321EncodeParams = BIP321EncodeParamsBase &
 
 export type BIP321EncodeResult = BIP321ParseResult & { uri: string }
 
+function formatBtcAmount(amount: number): string {
+  if (amount === 0) return "0";
+  return amount.toFixed(8).replace(/\.?0+$/, "");
+}
+
 export function encodeBIP321(params: BIP321EncodeParams): BIP321EncodeResult {
   const searchParams = new URLSearchParams();
 
@@ -356,7 +361,7 @@ export function encodeBIP321(params: BIP321EncodeParams): BIP321EncodeResult {
     if (Number.isNaN(params.amount) || !Number.isFinite(params.amount) || params.amount < 0) {
       throw new Error("Invalid amount format");
     }
-    searchParams.append("amount", params.amount.toString());
+    searchParams.append("amount", formatBtcAmount(params.amount));
   }
 
   append("label", params.label);

@@ -9,6 +9,7 @@ A TypeScript/JavaScript library for parsing and encoding BIP-321 Bitcoin URI sch
 - ✅ **Network detection** - Automatically detects mainnet, testnet, regtest, and signet networks
 - ✅ **Address validation** - Validates Bitcoin addresses (P2PKH, P2SH, Segwit v0, Taproot)
 - ✅ **Lightning invoice validation** - Validates BOLT11 Lightning invoices
+- ✅ **Legacy BIP21 `lightning=` compat** - Also accepts LNURL (`lnurl1...`) and lightning addresses (`user@domain.tld`) in the `lightning=` parameter, tagged via `PaymentMethod.kind` (`bolt11` | `lnurl` | `lnaddress`)
 
 ```typescript
 import { parseBIP321, type BIP321ParseResult, type PaymentMethod } from "bip-321";
@@ -23,6 +24,7 @@ result.errors;          // string[]
 result.paymentMethods.forEach((method: PaymentMethod) => {
   method.type;    // "onchain" | "lightning" | "offer" | "silent-payment" | "ark"
   method.network; // "mainnet" | "testnet" | "regtest" | "signet" | undefined
+  method.kind;    // For lightning only: "bolt11" | "lnurl" | "lnaddress" | undefined
   method.valid;   // boolean
 });
 ```
@@ -82,6 +84,7 @@ The library also exports standalone validation functions that can be used indepe
 import {
   validateBitcoinAddress,
   validateLightningInvoice,
+  validateLightningPayment,
   validateBolt12Offer,
   validateSilentPaymentAddress,
   validateArkAddress,
@@ -93,10 +96,18 @@ const btcResult = validateBitcoinAddress("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa");
 console.log(btcResult.valid); // true
 console.log(btcResult.network); // "mainnet"
 
-// Validate a Lightning invoice
+// Validate a Lightning invoice (strict BOLT11)
 const lnResult = validateLightningInvoice("lnbc15u1p3xnhl2pp5...");
 console.log(lnResult.valid); // true
 console.log(lnResult.network); // "mainnet"
+
+// Validate any legacy `lightning=` value (BOLT11, LNURL, or lightning address)
+const lnPay = validateLightningPayment("lnurl1dp68gurn8ghj7...");
+console.log(lnPay.valid); // true
+console.log(lnPay.kind);  // "lnurl"
+
+const lnAddr = validateLightningPayment("satoshi@bitcoin.org");
+console.log(lnAddr.kind); // "lnaddress"
 
 // Validate a BOLT12 offer
 const offerResult = validateBolt12Offer("lno1qqqq02k20d");
@@ -157,6 +168,30 @@ result.paymentMethods.forEach((method) => {
   console.log(`Type: ${method.type}, Network: ${method.network}, Valid: ${method.valid}`);
 });
 ```
+
+### Legacy `lightning=` with LNURL or Lightning Address
+
+The `lightning=` query parameter is reverse-compatible with legacy BIP21 URIs
+that carry an LNURL or a lightning address instead of a BOLT11 invoice. The
+`kind` field on the `PaymentMethod` tells you which one you got.
+
+```typescript
+const result = parseBIP321(
+  "bitcoin:bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq?lightning=lnurl1dp68gurn8ghj7..."
+);
+
+const lightning = result.paymentMethods.find((m) => m.type === "lightning");
+console.log(lightning?.valid); // true
+console.log(lightning?.kind);  // "lnurl"
+console.log(lightning?.value); // the LNURL string — call LNURL-pay to resolve
+
+// Lightning address form (LUD-16) — resolved via LNURL-pay HTTPS lookup
+const addr = parseBIP321("bitcoin:?lightning=satoshi@bitcoin.org");
+console.log(addr.paymentMethods[0]?.kind); // "lnaddress"
+```
+
+Branch on `kind` to choose how to pay: `bolt11` is ready to send, `lnurl` and
+`lnaddress` require a follow-up LNURL-pay HTTPS exchange to obtain an invoice.
 
 ### Lightning-Only Payment
 
@@ -325,7 +360,8 @@ Validates a Bitcoin address and returns network information.
 
 #### `validateLightningInvoice(invoice: string)`
 
-Validates a BOLT11 Lightning invoice and detects the network.
+Validates a BOLT11 Lightning invoice and detects the network. Strict — rejects
+LNURL and lightning addresses.
 
 **Returns:**
 ```typescript
@@ -335,6 +371,27 @@ Validates a BOLT11 Lightning invoice and detects the network.
   error?: string;
 }
 ```
+
+#### `validateLightningPayment(value: string)`
+
+Reverse-compatible validator for the legacy BIP21 `lightning=` parameter.
+Accepts a BOLT11 invoice, an LNURL (`lnurl1...`), or a lightning address
+(`user@domain.tld`), and reports which one it found via `kind`. This is what
+`parseBIP321` uses internally for the `lightning=` parameter.
+
+**Returns:**
+```typescript
+{
+  valid: boolean;
+  kind?: "bolt11" | "lnurl" | "lnaddress"; // LightningPaymentKind
+  network?: "mainnet" | "testnet" | "regtest" | "signet"; // bolt11 only
+  error?: string;
+}
+```
+
+**Note:** Only BOLT11 invoices carry a network in their encoding. LNURL and
+lightning addresses are network-agnostic at this layer — the network is decided
+by whatever URL/invoice the LNURL-pay flow ultimately returns.
 
 #### `validateBolt12Offer(offer: string)`
 
@@ -429,6 +486,10 @@ interface PaymentMethod {
   type: "onchain" | "lightning" | "offer" | "silent-payment" | "ark";
   value: string; // The actual address/invoice value
   network?: "mainnet" | "testnet" | "regtest" | "signet";
+  // For lightning methods only: distinguishes BOLT11 invoice from LNURL
+  // and from a lightning address (LUD-16). Undefined for non-lightning
+  // methods and for invalid lightning values.
+  kind?: "bolt11" | "lnurl" | "lnaddress";
   valid: boolean; // Whether this payment method is valid
   error?: string; // Error message if invalid
 }
@@ -475,7 +536,7 @@ console.log(summary);
 | Method | Parameter Key | Description |
 |--------|--------------|-------------|
 | On-chain | `address` or `bc`/`tb`/`bcrt`/`tbs` | Bitcoin addresses (P2PKH, P2SH, Segwit, Taproot) |
-| Lightning | `lightning` | BOLT11 Lightning invoices |
+| Lightning | `lightning` | BOLT11 invoices, plus legacy-compat LNURL (`lnurl1...`) and lightning addresses (`user@domain.tld`); see `PaymentMethod.kind` |
 | BOLT12 Offer | `lno` | Lightning BOLT12 offers |
 | Silent Payments | `sp` | BIP352 Silent Payment addresses |
 | Ark | `ark` | Ark addresses (mainnet: `ark1...`, testnet: `tark1...`) |
@@ -489,11 +550,15 @@ The library automatically detects the network from:
 - **Testnet**: `m...`, `n...`, `2...`, `tb1...`
 - **Regtest**: `bcrt1...`
 
-### Lightning Invoices
+### Lightning Invoices (BOLT11)
 - **Mainnet**: `lnbc...`
 - **Testnet**: `lntb...`
 - **Regtest**: `lnbcrt...`
 - **Signet**: `lntbs...`
+
+### LNURL / Lightning Address
+- **Network-agnostic**: `lnurl1...` and `user@domain.tld` do not encode a
+  network; resolve via LNURL-pay to obtain a network-tagged invoice.
 
 ### Silent Payment Addresses
 - **Mainnet**: `sp1q...`
